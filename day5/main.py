@@ -1,4 +1,6 @@
 import re
+import threading
+import time
 
 puzzleInputFile = "puzzleInput.txt"
 
@@ -7,7 +9,7 @@ def readFile(fileName):
     return file.read().splitlines()
   
 puzzleInput = readFile(puzzleInputFile)
-
+print(puzzleInput)
 seeds = []
 maps = {}
 phase = 0
@@ -91,10 +93,12 @@ for idx, line in enumerate(puzzleInput):
 
   maps[phase].append([[source, source+rangeInfo], [destination, destination+rangeInfo]])
 
-phaseValues = {}
-lowestValue = 0
-for seedRange in seedsRanges:
+
+def get_lowest_from_range(seedRange, lvs):
+  # lvs.append(1)
+  # print("hello")
   seed = seedRange[0]
+  lowestValue = 0
   while seed <= seedRange[0]+seedRange[1]:
     phaseValues[seed] = seed
     for phase, values in maps.items():
@@ -106,7 +110,25 @@ for seedRange in seedsRanges:
     if lowestValue == 0 or phaseValues[seed] < lowestValue:
       lowestValue = phaseValues[seed]
     seed += 1
+  lvs.append(lowestValue)
 
+lowestValues = []
+phaseValues = {}
+lowestValue = 0
+threads = {}
+tidx = 0
+for seedRange in seedsRanges:
+  tidx += 1
+  threads[tidx]=threading.Thread(target=get_lowest_from_range, args=[seedRange, lowestValues])
+  threads[tidx].start()
 
+print(threads)
+for idx, thread in threads.items():
+  # print(threads)
+  while thread.is_alive():
+    time.sleep(1)
+
+print(lowestValues)
+lowestValue = min(lowestValues)
 
 print("part 2: " + str(lowestValue))
